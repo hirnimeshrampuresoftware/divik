@@ -110,9 +110,39 @@ jobs:
         if: matrix.os == 'macos-latest'
       - name: Build Python package
         run: |
-          numpy --version
           poetry install
-          numpy --version
           poetry build -f wheel
       - name: Publish Python package
         run: poetry publish -u __token__ -p ${{ secrets.PYPI_TOKEN }}
+
+  push_aarch64_wheels:
+    strategy:
+      matrix:
+        pyver: [cp37-cp37m, cp38-cp38, cp39-cp39]
+      fail-fast: false
+    name: ${{ matrix.pyver }} ubuntu-latest aarch64 wheel      
+    runs-on: ubuntu-latest
+    env:
+      py: /opt/python/${{ matrix.pyver }}/bin/python
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up QEMU
+        id: qemu
+        uses: docker/setup-qemu-action@v1
+      - name: Build Python package
+        run: |
+            docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+            quay.io/pypa/manylinux2014_aarch64 \
+            bash -exc '${{ env.py }} -m venv .env && \
+            source .env/bin/activate && \
+            pip install --upgrade pip && \
+            pip install poetry poetry-core==1.0.0 && \
+            poetry update && \            
+            poetry install && \
+            poetry build -f wheel && \
+            deactivate'
+      - name: Publish Python package
+        run: |
+            pip install poetry
+            poetry publish -u __token__ -p ${{ secrets.PYPI_TOKEN }}
