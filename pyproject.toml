@@ -29,7 +29,7 @@ include = [
 build = "build.py"
 
 [tool.poetry.dependencies]
-python = ">=3.6"
+python = "^3.6"
 dask = {extras = ["dataframe"], version = ">=2.14.0"}
 dask-distance = "^0.2.0"
 h5py = ">=2.8.0"
